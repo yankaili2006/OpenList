@@ -32,3 +32,18 @@ output/
 /!public/dist/README.md
 
 .VSCodeCounter
+
+# Temporary files and archives
+*.tar.gz
+*.pkg
+openlist
+openlist-*
+
+# Backup directories
+data_backup_*/
+
+# Go installation (should be downloaded)
+go/
+
+# Temporary scripts
+fix_and_start.sh
