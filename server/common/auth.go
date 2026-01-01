@@ -5,7 +5,6 @@ import (
 
 	"github.com/OpenListTeam/OpenList/v4/internal/conf"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
-	"github.com/OpenListTeam/go-cache"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 )
@@ -18,8 +17,6 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-var validTokenCache = cache.NewMemCache[bool]()
-
 func GenerateToken(user *model.User) (tokenString string, err error) {
 	claim := UserClaims{
 		Username: user.Username,
@@ -31,10 +28,6 @@ func GenerateToken(user *model.User) (tokenString string, err error) {
 		}}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
 	tokenString, err = token.SignedString(SecretKey)
-	if err != nil {
-		return "", err
-	}
-	validTokenCache.Set(tokenString, true)
 	return tokenString, err
 }
 
@@ -42,9 +35,6 @@ func ParseToken(tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return SecretKey, nil
 	})
-	if IsTokenInvalidated(tokenString) {
-		return nil, errors.New("token is invalidated")
-	}
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
@@ -65,14 +55,7 @@ func ParseToken(tokenString string) (*UserClaims, error) {
 }
 
 func InvalidateToken(tokenString string) error {
-	if tokenString == "" {
-		return nil // don't invalidate empty guest token
-	}
-	validTokenCache.Del(tokenString)
+	// Token invalidation is no longer supported with the removal of token cache
+	// JWT tokens are now stateless and rely solely on expiration time
 	return nil
-}
-
-func IsTokenInvalidated(tokenString string) bool {
-	_, ok := validTokenCache.Get(tokenString)
-	return !ok
 }
